@@ -7,19 +7,19 @@ from aiogram.dispatcher import FSMContext
 import aiogram.utils.markdown as md
 from aiogram.types import ParseMode
 
-bot = Bot(token="2085497942:AAHc4kLlhLp-XTjk8nArsbk826YeD4N2Eo0")
+import os 
+
+bot = Bot(token='2085497942:AAHc4kLlhLp-XTjk8nArsbk826YeD4N2Eo0')
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=MemoryStorage())
-
 
 async def on_startup(_):
     print('Online')
 
-
 class Form(StatesGroup):
-    FIO = State()
+    FIO = State() 
     Age = State()
-    City = State()
+    City = State() 
     PhoneNumber = State()
     Email = State()
     Education = State()
@@ -30,7 +30,6 @@ class Form(StatesGroup):
     Salary = State()
     Source = State()
 
-
 @dp.message_handler(commands=['start', 'help'])
 async def command_start(message: types.Message):
     try:
@@ -39,12 +38,10 @@ async def command_start(message: types.Message):
     except:
         await message.reply('Напишите боту в ЛС https://t.me/CheburekerBot')
 
-
 @dp.message_handler(commands='opros')
 async def cmd_start(message: types.Message):
     await Form.FIO.set()
-    await message.reply("Как тебя зовут?")
-
+    await message.reply("Как вас зовут?")
 
 @dp.message_handler(state='*', commands='cancel')
 async def cancel_handler(message: types.Message, state: FSMContext):
@@ -55,7 +52,6 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     await state.finish()
     await message.reply('ОК')
 
-
 @dp.message_handler(state=Form.FIO)
 async def process_fio(message: types.Message, state: FSMContext):
     async with state.proxy() as data:
@@ -64,49 +60,36 @@ async def process_fio(message: types.Message, state: FSMContext):
     await Form.next()
     await message.reply("Сколько вам лет?")
 
-
 @dp.message_handler(lambda message: not message.text.isdigit(), state=Form.Age)
 async def process_age_invalid(message: types.Message):
-    return await message.reply("Напишите возраст или /cancel")
-
+    return await message.reply("Напишите возраст или отмените опрос командой /cancel")
 
 @dp.message_handler(lambda message: message.text.isdigit(), state=Form.Age)
 async def process_age(message: types.Message, state: FSMContext):
     await Form.next()
     await state.update_data(Age=int(message.text))
 
-    await message.reply("В каком часовом поясе вы живете?")
-
-
 @dp.message_handler(lambda message: not message.text.lstrip("-").isdigit(), state=Form.City)
 async def process_city_invalid1(message: types.Message):
-    return await message.reply("Напишите свой часовой пояс, например (4) или напиши /cancel")
+    return await message.reply("Напишите часовой пояс или отмените опрос командой /cancel")
 
-
-@dp.message_handler(
-    lambda message: message.text.lstrip("-").isdigit() and (int(message.text) < -12 or int(message.text) > 12),
-    state=Form.City)
+@dp.message_handler(lambda message: message.text.lstrip("-").isdigit() and (int(message.text)<-12 or int(message.text)>12), state=Form.City)
 async def process_city_invalid2(message: types.Message):
-    return await message.reply("Напишите свой часовой пояс, от -12 до 12 или /cancel")
+    return await message.reply("Напишите часовой пояс или отмените опрос командой /cancel")
 
-
-@dp.message_handler(
-    lambda message: message.text.lstrip("-").isdigit() and (int(message.text) >= -12) and (int(message.text) <= 12),
-    state=Form.City)
-async def process_city(message: types.Message, state: FSMContext):
+@dp.message_handler(lambda message: message.text.lstrip("-").isdigit() and (int(message.text)>=-12) and  (int(message.text)<=12), state=Form.City)
+async def process_city(message: types.Message,state: FSMContext):
     await Form.next()
     await state.update_data(City=message.text)
 
-    await message.reply("Укажите свой номер телефона, например 8800553535")
-
+    await message.reply("Укажите номер телефона")
 
 @dp.message_handler(state=Form.PhoneNumber)
 async def process_phonenumber(message: types.Message, state: FSMContext):
     await Form.next()
     await state.update_data(PhoneNumber=message.text)
 
-    await message.reply("Укажите свою электронную почту")
-
+    await message.reply("Укажите почту(email)")
 
 @dp.message_handler(state=Form.Email)
 async def process_email(message: types.Message, state: FSMContext):
@@ -114,14 +97,12 @@ async def process_email(message: types.Message, state: FSMContext):
     await state.update_data(Email=message.text)
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-    markup.add("полное высшее", "среднее")
-    await message.reply("Укажите наличие образования", reply_markup=markup)
-
+    markup.add("Да", "Нет")
+    await message.reply("Есть ли у вас высшее образование", reply_markup=markup)
 
 @dp.message_handler(lambda message: message.text not in ["Да", "Нет"], state=Form.Education)
 async def process_education_invalid(message: types.Message):
-    return await message.reply("Укажите образование кнопкой или /cancel")
-
+    return await message.reply("Укажите образование кнопкой на клавиатуре или отмените вопрос командой /cancel")
 
 @dp.message_handler(state=Form.Education)
 async def process_education(message: types.Message, state: FSMContext):
@@ -130,26 +111,23 @@ async def process_education(message: types.Message, state: FSMContext):
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add("Да", "Нет")
-    await message.reply("Умеете ли вы работать в Adobe Illustrator и Photoshop?", reply_markup=markup)
-
+    await message.reply("Умеете ли вы работать в Adobe Illustrator и Photoshop", reply_markup=markup)
 
 @dp.message_handler(lambda message: message.text not in ["Да", "Нет"], state=Form.AdobePhotoshop)
 async def process_adobephotoshop_invalid(message: types.Message):
-    return await message.reply("Укажите умение работы в фотошопе кнопкой или /cancel")
-
+    return await message.reply("Укажите знание работы в фотошопе кнопкой на клавиатуре или отмените опрос командой /cancel")
 
 @dp.message_handler(state=Form.AdobePhotoshop)
 async def process_adobephotoshop(message: types.Message, state: FSMContext):
     await Form.next()
     await state.update_data(AdobePhotoshop=message.text)
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-    markup.add("меньше 3 лет", "больше 3 лет")
-    await message.reply("Укажите свой стаж работы графическим дизайнером", reply_markup=markup)
+    markup = types.ReplyKeyboardRemove()
+    await message.reply("Укажите стаж работы графическим дизайнером",reply_markup=markup)
 
 @dp.message_handler(lambda message: not message.text.isdigit(), state=Form.Experience)
 async def process_experience_invalid(message: types.Message):
-    return await message.reply("Укажите стаж работы графическим дизайнером или /cancel")
 
+    return await message.reply("Укажите стаж работы графическим дизайнером или отмените опрос командой /cancel")
 
 @dp.message_handler(lambda message: message.text.isdigit(), state=Form.Experience)
 async def process_experience(message: types.Message, state: FSMContext):
@@ -158,7 +136,6 @@ async def process_experience(message: types.Message, state: FSMContext):
 
     await message.reply("Укажите сылку на портфолио")
 
-
 @dp.message_handler(state=Form.Portfolio)
 async def process_portfolio(message: types.Message, state: FSMContext):
     await Form.next()
@@ -166,13 +143,11 @@ async def process_portfolio(message: types.Message, state: FSMContext):
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add("Да", "Нет")
-    await message.reply("Готовы ли вы к работе на полную занятость в нашей компании? 5-8ч/день", reply_markup=markup)
-
+    await message.reply("Готовы ли вы к работе на полную занятость в нашей компании, 5-8ч/день", reply_markup=markup)
 
 @dp.message_handler(lambda message: message.text not in ["Да", "Нет"], state=Form.WorkDay)
 async def process_workday_invalid(message: types.Message):
-    return await message.reply("Укажите полную занятость кнопкой на клавиатуре или напиши /cancel")
-
+    return await message.reply("Укажите полную занятость кнопкой на клавиатуре или отмените опрос командой /cancel")
 
 @dp.message_handler(state=Form.WorkDay)
 async def process_workday(message: types.Message, state: FSMContext):
@@ -181,20 +156,16 @@ async def process_workday(message: types.Message, state: FSMContext):
     markup = types.ReplyKeyboardRemove()
     await message.reply("Укажите желаемую зарплату", reply_markup=markup)
 
-
 @dp.message_handler(lambda message: not message.text.isdigit(), state=Form.Salary)
 async def process_salary_invalid(message: types.Message):
-    return await message.reply("Укажите зарплату или напиши /cancel")
-
-
+    return await message.reply("Укажите зарплату или отмените опрос командой /cancel")
 
 @dp.message_handler(state=Form.Salary)
 async def process_salary(message: types.Message, state: FSMContext):
     await Form.next()
     await state.update_data(Salary=int(message.text))
 
-    await message.reply("Расскажите, откуда вы узнали про вакансию")
-
+    await message.reply("Укажите источник о вакансии")
 
 @dp.message_handler(state=Form.Source)
 async def process_source(message: types.Message, state: FSMContext):
@@ -205,7 +176,19 @@ async def process_source(message: types.Message, state: FSMContext):
         await bot.send_message(
             message.from_user.id,
             md.text(
-                md.text('Спасибо, результаты опроса будут рассмотрены. Мы вам позвоним(нет)'),
+                md.text('FIO:', md.bold(data['FIO'])),
+                md.text('Age:', md.code(data['Age'])),
+                md.text('City:', md.code(data['City'])),
+                md.text('PhoneNumber:', md.code(data['PhoneNumber'])),
+                md.text('Email:', md.bold(data['Email'])),
+                md.text('Education:', md.bold(data['Education'])),
+                md.text('AdobePhotoshop:', md.bold(data['AdobePhotoshop'])),
+                md.text('Experience:', md.code(data['Experience'])),
+                md.text('Portfolio:', md.bold(data['Portfolio'])),
+                md.text('WorkDay:', md.bold(data['WorkDay'])),
+                md.text('Salary:', md.code(data['Salary'])),
+                md.text('Source:', md.bold(data['Source'])),
+                md.text('Ничего не произойдёт.'),
                 sep='\n',
             ),
             reply_markup=markup,
@@ -213,10 +196,5 @@ async def process_source(message: types.Message, state: FSMContext):
         )
 
     await state.finish()
-
-@dp.message_handler()
-async def echo_send(message : types.Message):
-    if message.text=='Kek':
-        await message.reply('Чебурек')
 
 executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
